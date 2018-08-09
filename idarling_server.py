@@ -49,7 +49,7 @@ class DedicatedServer(Server):
         logPath = os.path.join(logDir, 'idarling.%s.log' % os.getpid())
 
         # Configure the logger
-        logger.setLevel(logging.DEBUG)
+        # logger.setLevel(logging.DEBUG)
         logFormat = '[%(asctime)s][%(levelname)s] %(message)s'
         formatter = logging.Formatter(fmt=logFormat, datefmt='%H:%M:%S')
 

@@ -451,7 +451,7 @@ class StrucDeletedEvent(Event):
         self.sname = Event.decode(sname)
 
     def __call__(self):
-        ida_struct.del_struc(ida_struct.get_struc_id(Event.encode(self.sname)))
+        ida_struct.del_struc(ida_struct.get_struc(ida_struct.get_struc_id(Event.encode(self.sname))))
 
 
 class StrucRenamedEvent(Event):
@@ -816,7 +816,7 @@ class UserLvarSettingsEvent(HexRaysEvent):
         for lv in self.lvar_settings['lvvec']:
             lvinf.lvvec.push_back(
                 UserLvarSettingsEvent._get_lvar_saved_info(lv))
-        if hasattr(lvinf, 'sizes'):
+        if hasattr(self.lvar_settings, 'sizes'):
             lvinf.sizes = ida_pro.intvec_t()
             for i in self.lvar_settings['sizes']:
                 lvinf.sizes.push_back(i)
@@ -842,6 +842,7 @@ class UserLvarSettingsEvent(HexRaysEvent):
 
     @staticmethod
     def _get_tinfo(dct):
+        dct = [Event.encode(s) if isinstance(s, unicode) else s for s in dct]
         type = ida_typeinf.tinfo_t()
         if dct[0] is not None:
             type.deserialize(None, *dct)
