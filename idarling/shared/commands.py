@@ -16,7 +16,7 @@ from .packets import (Command, DefaultCommand, ParentCommand,
 
 
 class GetRepositories(ParentCommand):
-    __command__ = 'get_repos'
+    __command__ = u'get_repos'
 
     class Query(IQuery, DefaultCommand):
         pass
@@ -28,14 +28,14 @@ class GetRepositories(ParentCommand):
             self.repos = repos
 
         def build_command(self, dct):
-            dct['repos'] = [repo.build(dict()) for repo in self.repos]
+            dct[u'repos'] = [repo.build(dict()) for repo in self.repos]
 
         def parse_command(self, dct):
-            self.repos = [Repository.new(repo) for repo in dct['repos']]
+            self.repos = [Repository.new(repo) for repo in dct[u'repos']]
 
 
 class GetBranches(ParentCommand):
-    __command__ = 'get_branches'
+    __command__ = u'get_branches'
 
     class Query(IQuery, DefaultCommand):
 
@@ -50,14 +50,14 @@ class GetBranches(ParentCommand):
             self.branches = branches
 
         def build_command(self, dct):
-            dct['branches'] = [br.build(dict()) for br in self.branches]
+            dct[u'branches'] = [br.build(dict()) for br in self.branches]
 
         def parse_command(self, dct):
-            self.branches = [Branch.new(br) for br in dct['branches']]
+            self.branches = [Branch.new(br) for br in dct[u'branches']]
 
 
 class NewRepository(ParentCommand):
-    __command__ = 'new_repo'
+    __command__ = u'new_repo'
 
     class Query(IQuery, Command):
 
@@ -66,17 +66,17 @@ class NewRepository(ParentCommand):
             self.repo = repo
 
         def build_command(self, dct):
-            self.repo.build(dct['repo'])
+            self.repo.build(dct[u'repo'])
 
         def parse_command(self, dct):
-            self.repo = Repository.new(dct['repo'])
+            self.repo = Repository.new(dct[u'repo'])
 
     class Reply(IReply, Command):
         pass
 
 
 class NewBranch(ParentCommand):
-    __command__ = 'new_branch'
+    __command__ = u'new_branch'
 
     class Query(IQuery, Command):
 
@@ -85,17 +85,17 @@ class NewBranch(ParentCommand):
             self.branch = branch
 
         def build_command(self, dct):
-            self.branch.build(dct['branch'])
+            self.branch.build(dct[u'branch'])
 
         def parse_command(self, dct):
-            self.branch = Branch.new(dct['branch'])
+            self.branch = Branch.new(dct[u'branch'])
 
     class Reply(IReply, Command):
         pass
 
 
 class UploadDatabase(ParentCommand):
-    __command__ = 'upload_db'
+    __command__ = u'upload_d'
 
     class Query(IQuery, Container, DefaultCommand):
 
@@ -109,7 +109,7 @@ class UploadDatabase(ParentCommand):
 
 
 class DownloadDatabase(ParentCommand):
-    __command__ = 'download_db'
+    __command__ = u'download_d'
 
     class Query(IQuery, DefaultCommand):
 
@@ -123,7 +123,7 @@ class DownloadDatabase(ParentCommand):
 
 
 class Subscribe(DefaultCommand):
-    __command__ = 'subscribe'
+    __command__ = u'subscribe'
 
     def __init__(self, repo, branch, tick):
         super(Subscribe, self).__init__()
@@ -133,4 +133,4 @@ class Subscribe(DefaultCommand):
 
 
 class Unsubscribe(DefaultCommand):
-    __command__ = 'unsubscribe'
+    __command__ = u'unsubscribe'

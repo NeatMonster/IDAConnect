@@ -190,7 +190,13 @@ class Core(Module):
         """
         node = ida_netnode.netnode(Core.NETNODE_NAME, 0, True)
         self._repo = node.hashval('repo') or None
+        if self._repo:
+            self._repo = self._repo.decode('utf-8')
+
         self._branch = node.hashval('branch') or None
+        if self._branch:
+            self._branch = self._branch.decode('utf-8')
+
         self._tick = int(node.hashval('tick') or '0')
 
         logger.debug("Loaded netnode: repo=%s, branch=%s, tick=%d"
@@ -202,9 +208,9 @@ class Core(Module):
         """
         node = ida_netnode.netnode(Core.NETNODE_NAME, 0, True)
         if self._repo:
-            node.hashset('repo', str(self._repo))
+            node.hashset('repo', self._repo.encode('utf-8'))
         if self._branch:
-            node.hashset('branch', str(self._branch))
+            node.hashset('branch', self._branch.encode('utf-8'))
         if self._tick:
             node.hashset('tick', str(self._tick))
 

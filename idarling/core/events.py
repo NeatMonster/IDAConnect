@@ -10,6 +10,8 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+from __future__ import unicode_literals
+
 import logging
 
 import ida_bytes
@@ -42,21 +44,9 @@ class Event(DefaultEvent):
         :param s: the unicode string
         :return: the utf-8 bytes
         """
-        if not isinstance(s, unicode):
+        if s is None:
             return s
         return s.encode('utf-8')
-
-    @staticmethod
-    def encode_bytes(s):
-        """
-        Encodes a unicode string into raw bytes.
-
-        :param s: the unicode string
-        :return: the raw bytes
-        """
-        if not isinstance(s, unicode):
-            return s
-        return s.encode('raw_unicode_escape')
 
     @staticmethod
     def decode(s):
@@ -66,21 +56,9 @@ class Event(DefaultEvent):
         :param s: the utf-8 bytes
         :return: the unicode string
         """
-        if not isinstance(s, str):
+        if s is None:
             return s
         return s.decode('utf-8')
-
-    @staticmethod
-    def decode_bytes(s):
-        """
-        Decodes raw bytes into a unicode string.
-
-        :param s: the raw bytes
-        :return: the unicode string
-        """
-        if not isinstance(s, str):
-            return s
-        return s.decode('raw_unicode_escape')
 
     def __call__(self):
         """
@@ -276,11 +254,11 @@ class TiChangedEvent(Event):
         super(TiChangedEvent, self).__init__()
         self.ea = ea
         self.py_type = []
-        if py_type:
-            self.py_type.extend(Event.decode_bytes(t) for t in py_type)
+        if py_type is not None:
+            self.py_type.extend(py_type)
 
     def __call__(self):
-        py_type = [Event.encode_bytes(t) for t in self.py_type]
+        py_type = self.py_type
         if len(py_type) == 3:
             py_type = py_type[1:]
         if len(py_type) >= 2:
@@ -295,39 +273,22 @@ class LocalTypesChangedEvent(Event):
         super(LocalTypesChangedEvent, self).__init__()
         self.local_type = []
         if local_type is not None:
-            for t in local_type:
-                if t is not None:
-                    self.local_type.append((
-                        Event.decode_bytes(t[0]),
-                        Event.decode_bytes(t[1]),
-                        Event.decode_bytes(t[2]),
-                    ))
-                else:
-                    self.local_type.append(None)
+            self.local_type.extend(local_type)
 
     def __call__(self):
-        local_type = []
-        for t in self.local_type:
-            if t is not None:
-                local_type.append((
-                    Event.encode_bytes(t[0]),
-                    Event.encode_bytes(t[1]),
-                    Event.encode_bytes(t[2]),
-                ))
-            else:
-                local_type.append(None)
-
-        missing_ord = len(local_type) - ida_typeinf.get_ordinal_qty(None) + 1
+        missing_ord = (len(self.local_type) -
+                       ida_typeinf.get_ordinal_qty(None) + 1)
         if missing_ord > 0:
             ida_typeinf.alloc_type_ordinals(None, missing_ord)
 
-        for i, t in enumerate(local_type):
+        for i, t in enumerate(self.local_type):
             if t is not None:
                 cur_tinfo = ida_typeinf.tinfo_t()
                 cur_tinfo.deserialize(None, t[0], t[1])
                 cur_tinfo.set_numbered_type(None, i + 1, 0, t[2])
             else:
                 ida_typeinf.del_numbered_type(None, i + 1)
+
         ida_kernwin.request_refresh(ida_kernwin.IWID_LOCTYPS)
 
 
@@ -940,11 +901,11 @@ class UserNumformsEvent(HexRaysEvent):
             ol = ida_hexrays.operand_locator_t(_ol['ea'], _ol['opnum'])
             nf = ida_hexrays.number_format_t()
             nf.flags = _nf['flags']
-            nf.opnum = Event.encode(_nf['opnum'])
-            nf.props = Event.encode(_nf['props'])
+            nf.opnum = _nf['opnum']
+            nf.props = _nf['props']
             nf.serial = _nf['serial']
-            nf.org_nbytes = Event.encode(_nf['org_nbytes'])
-            nf.type_name = Event.encode(_nf['type_name'])
+            nf.org_nbytes = _nf['org_nbytes']
+            nf.type_name = _nf['type_name']
             ida_hexrays.user_numforms_insert(numforms, ol, nf)
         ida_hexrays.save_user_numforms(self.ea, numforms)
         HexRaysEvent.refresh_pseudocode_view()

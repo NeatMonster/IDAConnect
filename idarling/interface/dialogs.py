@@ -25,8 +25,8 @@ from PyQt5.QtWidgets import (QDialog, QHBoxLayout, QVBoxLayout, QGridLayout,
                              QPushButton, QLineEdit, QGroupBox, QMessageBox,
                              QCheckBox)
 
-from ..shared.commands import GetRepositories, GetBranches, \
-                               NewRepository, NewBranch
+from ..shared.commands import (GetRepositories, GetBranches,
+                               NewRepository, NewBranch)
 from ..shared.models import Repository, Branch
 
 logger = logging.getLogger('IDArling.Interface')
@@ -330,6 +330,8 @@ class SaveDialog(OpenDialog):
 
         dateFormat = "%Y/%m/%d %H:%M"
         date = datetime.datetime.now().strftime(dateFormat)
+        date = date.decode('ascii')
+
         branch = Branch(self._repo.name, name, date, -1)
         d = self._plugin.network.send_packet(NewBranch.Query(branch))
         d.add_callback(partial(self._on_new_branch, branch))
