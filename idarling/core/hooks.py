@@ -130,7 +130,7 @@ class IDBHooks(Hooks, ida_idp.IDB_Hooks):
             if ret is not None:
                 type_str, fields_str = ret
                 type_name = ida_typeinf.get_numbered_type_name(
-                                ida_typeinf.cvar.idati, ordinal)
+                    ida_typeinf.cvar.idati, ordinal)
                 cur_ti = ida_typeinf.tinfo_t()
                 cur_ti.deserialize(ida_typeinf.cvar.idati, type_str,
                                    fields_str)
@@ -170,7 +170,7 @@ class IDBHooks(Hooks, ida_idp.IDB_Hooks):
             op = 'enum'
             id, serial = gather_enum_info(ea, n)
             ename = ida_enum.get_enum_name(id)
-            extra['ename'] = Event.decode(ename)
+            extra['ename'] = ename
             extra['serial'] = serial
         elif is_flag(flags & ida_bytes.stroff_flag()):
             op = 'struct'
@@ -181,7 +181,7 @@ class IDBHooks(Hooks, ida_idp.IDB_Hooks):
             spath = []
             for i in range(path_len):
                 sname = ida_struct.get_struc_name(path[i])
-                spath.append(Event.decode(sname))
+                spath.append(sname)
             extra['delta'] = delta.value()
             extra['spath'] = spath
         elif is_flag(ida_bytes.stkvar_flag()):
@@ -479,7 +479,7 @@ class HexRaysHooks(Hooks):
         while it != ida_hexrays.user_labels_end(user_labels):
             org_label = ida_hexrays.user_labels_first(it)
             name = ida_hexrays.user_labels_second(it)
-            labels.append((org_label, Event.decode(name)))
+            labels.append((org_label, name))
             it = ida_hexrays.user_labels_next(it)
         ida_hexrays.user_labels_free(user_labels)
         return labels
@@ -500,7 +500,7 @@ class HexRaysHooks(Hooks):
         while it != ida_hexrays.user_cmts_end(user_cmts):
             tl = ida_hexrays.user_cmts_first(it)
             cmt = ida_hexrays.user_cmts_second(it)
-            cmts.append(((tl.ea, tl.itp), Event.decode(str(cmt))))
+            cmts.append(((tl.ea, tl.itp), str(cmt)))
             it = ida_hexrays.user_cmts_next(it)
         ida_hexrays.user_cmts_free(user_cmts)
         return cmts
@@ -567,9 +567,9 @@ class HexRaysHooks(Hooks):
     def _get_lvar_saved_info(lv):
         return {
             'll': HexRaysHooks._get_lvar_locator(lv.ll),
-            'name': Event.decode(lv.name),
+            'name': lv.name,
             'type': HexRaysHooks._get_tinfo(lv.type),
-            'cmt': Event.decode(lv.cmt),
+            'cmt': lv.cmt,
             'flags': lv.flags,
         }
 
