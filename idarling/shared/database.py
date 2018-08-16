@@ -10,7 +10,7 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-import json
+import msgpack
 import sqlite3
 
 from .models import Repository, Branch
@@ -56,7 +56,7 @@ class Database(object):
             'repo text not null',
             'branch text not null',
             'tick integer not null',
-            'dict text not null',
+            'dict blob not null',
             'foreign key(repo) references repos(name)',
             'foreign key(repo, branch) references branches(repo, name)',
             'primary key(repo, branch, tick)',
@@ -136,7 +136,7 @@ class Database(object):
             'repo': client.repo,
             'branch': client.branch,
             'tick': event.tick,
-            'dict': json.dumps(dct)
+            'dict': msgpack.packb(dct, use_bin_type=True)
         })
 
     def select_events(self, repo, branch, tick):
@@ -154,7 +154,7 @@ class Database(object):
         c.execute(sql, [repo, branch, tick])
         events = []
         for result in c.fetchall():
-            dct = json.loads(result['dict'])
+            dct = msgpack.unpackb(result['dict'], raw=False)
             dct['tick'] = result['tick']
             events.append(DefaultEvent.new(dct))
         return events

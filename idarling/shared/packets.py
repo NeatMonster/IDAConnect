@@ -10,8 +10,15 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+from __future__ import unicode_literals
+
+import sys
 import collections
 import itertools
+
+# Allow testing for unicode strings
+if sys.version_info.major == 3:
+    unicode = str
 
 
 def with_metaclass(meta, *bases):
@@ -29,7 +36,7 @@ def with_metaclass(meta, *bases):
         @classmethod
         def __prepare__(cls, name, _):
             return meta.__prepare__(name, bases)
-    return type.__new__(metaclass, 'temporary_class', (), {})
+    return type.__new__(metaclass, str('temporary_class'), (), {})
 
 
 class Serializable(object):
@@ -84,7 +91,13 @@ class Default(Serializable):
         :param dct: the dictionary
         :return: the filtered dictionary
         """
-        return {key: val for key, val in dct.items()
+        def try_decode(s):
+            # Force attribute keys to be unicode on the wire.
+            if not isinstance(s, unicode):
+                return s.decode('utf-8')
+            return s
+
+        return {try_decode(key): val for key, val in dct.items()
                 if not key.startswith('_')}
 
     def build_default(self, dct):
@@ -190,9 +203,9 @@ class Packet(with_metaclass(PacketFactory, Serializable)):
         name = self.__class__.__name__
         if isinstance(self, Query) or isinstance(self, Reply):
             name = self.__parent__.__name__ + '.' + name
-        attrs = [u'{}={}'.format(k, v) for k, v
+        attrs = ['{}={}'.format(k, v) for k, v
                  in Default.attrs(self.__dict__).items()]
-        return u'{}({})'.format(name, u', '.join(attrs))
+        return '{}({})'.format(name, ', '.join(attrs))
 
 
 class PacketDeferred(object):

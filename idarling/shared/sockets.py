@@ -12,7 +12,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import collections
 import errno
-import json
+import msgpack
 import socket
 import ssl
 
@@ -52,6 +52,7 @@ class ClientSocket(QObject):
         self._socket = None
         self._server = parent and isinstance(parent, ServerSocket)
 
+        self._unpacker = msgpack.Unpacker(raw=False)
         self._read_buffer = bytearray()
         self._read_notifier = None
         self._read_packet = None
@@ -129,46 +130,32 @@ class ClientSocket(QObject):
                         and not isinstance(e, ssl.SSLWantWriteError):
                     self.disconnect(e)
                 break  # No more data available
-            self._read_buffer.extend(data)
+            self._unpacker.feed(data)
 
-        while True:
+        for raw_packet in self._unpacker:
             if self._read_packet is None:
-                if b'\n' in self._read_buffer:
-                    pos = self._read_buffer.index(b'\n')
-                    line = self._read_buffer[:pos]
-                    self._read_buffer = self._read_buffer[pos + 1:]
-
-                    # Try to parse the line as a packet
-                    try:
-                        dct = json.loads(line.decode('utf-8'))
-                        self._read_packet = Packet.parse_packet(dct,
-                                                                self._server)
-                    except Exception as e:
-                        msg = "Invalid packet received: %s" % line
-                        self._logger.warning(msg)
-                        self._logger.exception(e)
-                        continue
-                else:
-                    break  # Not enough data for a packet
-
-            else:
+                try:
+                    self._read_packet = Packet.parse_packet(raw_packet,
+                                                            self._server)
+                except Exception as e:
+                    msg = "Invalid packet received: %r" % raw_packet
+                    self._logger.warning(msg)
+                    self._logger.exception(e)
+                    continue
                 if isinstance(self._read_packet, Container):
-                    avail = len(self._read_buffer)
-                    total = self._read_packet.size
+                    continue
+            else:
+                # Trigger the downback
+                # total = self._read_packet.size
+                # if self._read_packet.downback:
+                #     self._read_packet.downback(min(avail, total), total)
 
-                    # Trigger the downback
-                    if self._read_packet.downback:
-                        self._read_packet.downback(min(avail, total), total)
+                # raw_packet should be a bytestring containing the payload
+                assert isinstance(raw_packet, bytes)
+                self._read_packet.content = raw_packet
 
-                    # Read the container's content
-                    if avail >= total:
-                        self._read_packet.content = self._read_buffer[:total]
-                        self._read_buffer = self._read_buffer[total:]
-                    else:
-                        break  # Not enough data for a packet
-
-                self._incoming.append(self._read_packet)
-                self._read_packet = None
+            self._incoming.append(self._read_packet)
+            self._read_packet = None
 
         if self._incoming:
             QCoreApplication.instance().postEvent(self, PacketEvent())
@@ -184,8 +171,8 @@ class ClientSocket(QObject):
                 self._write_packet = self._outgoing.popleft()
 
                 try:
-                    line = json.dumps(self._write_packet.build_packet())
-                    line = line.encode('utf-8') + b'\n'
+                    packed = msgpack.packb(self._write_packet.build_packet(),
+                                           use_bin_type=True)
                 except Exception as e:
                     msg = "Invalid packet being sent: %s" % self._write_packet
                     self._logger.warning(msg)
@@ -193,11 +180,12 @@ class ClientSocket(QObject):
                     continue
 
                 # Write the container's content
-                self._write_buffer.extend(bytearray(line))
+                self._write_buffer.extend(packed)
                 if isinstance(self._write_packet, Container):
-                    data = self._write_packet.content
-                    self._write_buffer.extend(bytearray(data))
-                    self._write_packet.size += len(line)
+                    packed = msgpack.packb(self._write_packet.content,
+                                           use_bin_type=True)
+                    self._write_buffer.extend(packed)
+                    self._write_packet.size += len(packed)
 
             # Send as many bytes as possible
             try:
@@ -215,7 +203,7 @@ class ClientSocket(QObject):
             # Trigger the upback
             if isinstance(self._write_packet, Container) \
                     and self._write_packet.upback:
-                self._write_packet.size -= count
+                self._write_packet.size -= sent
                 total = len(self._write_packet.content)
                 sent = max(total - self._write_packet.size, 0)
                 self._write_packet.upback(sent, total)

@@ -105,7 +105,7 @@ class ServerClient(ClientSocket):
             # Forward the event to the other clients
             def should_forward(client):
                 return client.repo == self._repo \
-                       and client.branch == self._branch and client != self
+                    and client.branch == self._branch and client != self
 
             for client in self.parent().find_clients(should_forward):
                 client.send_packet(packet)

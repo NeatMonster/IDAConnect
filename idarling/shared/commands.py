@@ -10,6 +10,8 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+from __future__ import unicode_literals
+
 from .models import Repository, Branch
 from .packets import (Command, DefaultCommand, ParentCommand,
                       Query as IQuery, Reply as IReply, Container)
@@ -95,7 +97,7 @@ class NewBranch(ParentCommand):
 
 
 class UploadDatabase(ParentCommand):
-    __command__ = 'upload_db'
+    __command__ = 'upload_d'
 
     class Query(IQuery, Container, DefaultCommand):
 
@@ -109,7 +111,7 @@ class UploadDatabase(ParentCommand):
 
 
 class DownloadDatabase(ParentCommand):
-    __command__ = 'download_db'
+    __command__ = 'download_d'
 
     class Query(IQuery, DefaultCommand):
 

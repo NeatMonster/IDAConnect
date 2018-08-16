@@ -10,6 +10,8 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+from __future__ import unicode_literals
+
 from .packets import Default
 
 
@@ -34,9 +36,9 @@ class Model(Default):
 
         :return: the representation
         """
-        attrs = u', '.join([u'{}={}'.format(key, val) for key, val in
-                            Default.attrs(self.__dict__).items()])
-        return u'{}({})'.format(self.__class__.__name__, attrs)
+        attrs = ', '.join(['{}={}'.format(key, val) for key, val in
+                           Default.attrs(self.__dict__).items()])
+        return '{}({})'.format(self.__class__.__name__, attrs)
 
 
 class Repository(Model):
