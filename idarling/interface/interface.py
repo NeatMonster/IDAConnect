@@ -15,7 +15,8 @@ import logging
 from PyQt5.QtCore import QObject, Qt
 from PyQt5.QtGui import QShowEvent, QPixmap
 from PyQt5.QtWidgets import qApp, QMainWindow,\
-                            QDialog, QGroupBox, QLabel
+                            QDialog, QGroupBox, QLabel,\
+                            QApplication
 
 from ..module import Module
 from .actions import OpenAction, SaveAction
