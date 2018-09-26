@@ -12,7 +12,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import datetime
 from functools import partial
-import logging
 
 import ida_loader
 import ida_nalt
@@ -21,19 +20,14 @@ from PyQt5.QtCore import QRegExp, Qt  # noqa: I202
 from PyQt5.QtGui import QIcon, QRegExpValidator
 from PyQt5.QtWidgets import (
     QCheckBox,
-    QColorDialog,
-    QComboBox,
     QDialog,
-    QFormLayout,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -41,6 +35,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from . import tabs
 from ..shared.commands import (
     CreateDatabase,
     CreateProject,
@@ -416,163 +411,43 @@ class SettingsDialog(QDialog):
 
         window_widget = QWidget(self)
         window_layout = QVBoxLayout(window_widget)
-        tabs = QTabWidget(window_widget)
-        window_layout.addWidget(tabs)
 
-        # "General Settings" tab
-        tab = QWidget(tabs)
-        layout = QFormLayout(tab)
-        layout.setFormAlignment(Qt.AlignVCenter)
-        tabs.addTab(tab, "General Settings")
+        # Settings Tabs Container
+        tab_widget = QTabWidget(window_widget)
+        window_layout.addWidget(tab_widget)
 
-        user_widget = QWidget(tab)
-        user_layout = QHBoxLayout(user_widget)
-        layout.addRow(user_widget)
+        # General Settings tab
+        tab_general = tabs.cfg_general(self, tab_widget)
+        tab_widget.addTab(tab_general, "General Settings")
 
-        # User color
-        self._color_button = QPushButton("")
-        self._color_button.setFixedSize(50, 30)
+        # Server Settings tab
+        tab_servers = tabs.cfg_server(self, tab_widget)
+        tab_widget.addTab(tab_servers, "Server Settings")
 
-        def color_button_activated(_):
-            self._set_color(qt_color=QColorDialog.getColor().rgb())
+        # Network Settings tab
+        tab_network = tabs.cfg_network(self, tab_widget)
+        tab_widget.addTab(tab_network, "Network Settings")
 
-        self._color = self._plugin.config["user"]["color"]
-        self._set_color(ida_color=self._color)
-        self._color_button.clicked.connect(color_button_activated)
-        user_layout.addWidget(self._color_button)
-
-        # User name
-        self._name_line_edit = QLineEdit()
-        name = self._plugin.config["user"]["name"]
-        self._name_line_edit.setText(name)
-        user_layout.addWidget(self._name_line_edit)
-
-        text = "Show other users in the navigation bar"
-        self._navbar_colorizer_checkbox = QCheckBox(text)
-        layout.addRow(self._navbar_colorizer_checkbox)
-        checked = self._plugin.config["user"]["navbar_colorizer"]
-        self._navbar_colorizer_checkbox.setChecked(checked)
-
-        text = "Allow other users to send notifications"
-        self._notifications_checkbox = QCheckBox(text)
-        layout.addRow(self._notifications_checkbox)
-        checked = self._plugin.config["user"]["notifications"]
-        self._notifications_checkbox.setChecked(checked)
-
-        # Log level
-        debug_level_label = QLabel("Logging level: ")
-        self._debug_level_combo_box = QComboBox()
-        self._debug_level_combo_box.addItem("CRITICAL", logging.CRITICAL)
-        self._debug_level_combo_box.addItem("ERROR", logging.ERROR)
-        self._debug_level_combo_box.addItem("WARNING", logging.WARNING)
-        self._debug_level_combo_box.addItem("INFO", logging.INFO)
-        self._debug_level_combo_box.addItem("DEBUG", logging.DEBUG)
-        self._debug_level_combo_box.addItem("TRACE", logging.TRACE)
-        level = self._plugin.config["level"]
-        index = self._debug_level_combo_box.findData(level)
-        self._debug_level_combo_box.setCurrentIndex(index)
-        layout.addRow(debug_level_label, self._debug_level_combo_box)
-
-        # "Network Settings" tab
-        tab = QWidget(tabs)
-        layout = QVBoxLayout(tab)
-        tab.setLayout(layout)
-        tabs.addTab(tab, "Network Settings")
-
-        top_widget = QWidget(tab)
-        layout.addWidget(top_widget)
-        top_layout = QHBoxLayout(top_widget)
-
-        self._servers = list(self._plugin.config["servers"])
-        self._servers_table = QTableWidget(len(self._servers), 2, self)
-        top_layout.addWidget(self._servers_table)
-        for i, server in enumerate(self._servers):
-            # Server host and port
-            item = QTableWidgetItem("%s:%d" % (server["host"], server["port"]))
-            item.setData(Qt.UserRole, server)
-            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-            if self._plugin.network.server == server:
-                item.setFlags((item.flags() & ~Qt.ItemIsSelectable))
-            self._servers_table.setItem(i, 0, item)
-
-            # Server has SSL enabled?
-            checkbox = QTableWidgetItem()
-            state = Qt.Unchecked if server["no_ssl"] else Qt.Checked
-            checkbox.setCheckState(state)
-            checkbox.setFlags((checkbox.flags() & ~Qt.ItemIsEditable))
-            checkbox.setFlags((checkbox.flags() & ~Qt.ItemIsUserCheckable))
-            if self._plugin.network.server == server:
-                checkbox.setFlags((checkbox.flags() & ~Qt.ItemIsSelectable))
-            self._servers_table.setItem(i, 1, checkbox)
-
-        self._servers_table.setHorizontalHeaderLabels(("Servers", ""))
-        horizontal_header = self._servers_table.horizontalHeader()
-        horizontal_header.setSectionsClickable(False)
-        horizontal_header.setSectionResizeMode(0, QHeaderView.Stretch)
-        horizontal_header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self._servers_table.verticalHeader().setVisible(False)
-        self._servers_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self._servers_table.setSelectionMode(QTableWidget.SingleSelection)
-        self._servers_table.itemClicked.connect(self._server_clicked)
-        self._servers_table.itemDoubleClicked.connect(
-            self._server_double_clicked
-        )
-        self._servers_table.setMaximumHeight(100)
-
-        buttons_widget = QWidget(top_widget)
-        buttons_layout = QVBoxLayout(buttons_widget)
-        top_layout.addWidget(buttons_widget)
-
-        # Add server button
-        self._add_button = QPushButton("Add Server")
-        self._add_button.clicked.connect(self._add_button_clicked)
-        buttons_layout.addWidget(self._add_button)
-
-        # Edit server button
-        self._edit_button = QPushButton("Edit Server")
-        self._edit_button.setEnabled(False)
-        self._edit_button.clicked.connect(self._edit_button_clicked)
-        buttons_layout.addWidget(self._edit_button)
-
-        # Delete server button
-        self._delete_button = QPushButton("Delete Server")
-        self._delete_button.setEnabled(False)
-        self._delete_button.clicked.connect(self._delete_button_clicked)
-        buttons_layout.addWidget(self._delete_button)
-
-        bottom_widget = QWidget(tab)
-        bottom_layout = QFormLayout(bottom_widget)
-        layout.addWidget(bottom_widget)
-
-        # TCP Keep-Alive settings
-        keep_cnt_label = QLabel("Keep-Alive Count: ")
-        self._keep_cnt_spin_box = QSpinBox(bottom_widget)
-        self._keep_cnt_spin_box.setRange(0, 86400)
-        self._keep_cnt_spin_box.setValue(self._plugin.config["keep"]["cnt"])
-        self._keep_cnt_spin_box.setSuffix(" packets")
-        bottom_layout.addRow(keep_cnt_label, self._keep_cnt_spin_box)
-
-        keep_intvl_label = QLabel("Keep-Alive Interval: ")
-        self._keep_intvl_spin_box = QSpinBox(bottom_widget)
-        self._keep_intvl_spin_box.setRange(0, 86400)
-        self._keep_intvl_spin_box.setValue(
-            self._plugin.config["keep"]["intvl"]
-        )
-        self._keep_intvl_spin_box.setSuffix(" seconds")
-        bottom_layout.addRow(keep_intvl_label, self._keep_intvl_spin_box)
-
-        keep_idle_label = QLabel("Keep-Alive Idle: ")
-        self._keep_idle_spin_box = QSpinBox(bottom_widget)
-        self._keep_idle_spin_box.setRange(0, 86400)
-        self._keep_idle_spin_box.setValue(self._plugin.config["keep"]["idle"])
-        self._keep_idle_spin_box.setSuffix(" seconds")
-        bottom_layout.addRow(keep_idle_label, self._keep_idle_spin_box)
-
-        # Buttons commons to all tabs
-        actions_widget = QWidget(self)
+        # Action Buttons Container
+        actions_widget = QWidget(window_widget)
         actions_layout = QHBoxLayout(actions_widget)
+        window_layout.addWidget(actions_widget)
 
-        # Cancel = do not save the changes and close the dialog
+        # Save button
+        def save(_):
+            self._commit()
+            self.accept()
+
+        save_button = QPushButton("Save & Close")
+        save_button.clicked.connect(save)
+        actions_layout.addWidget(save_button)
+
+        # Reset button
+        reset_button = QPushButton("Reset ALL to Default")
+        reset_button.clicked.connect(self._reset)
+        actions_layout.addWidget(reset_button)
+
+        # Cancel button
         def cancel(_):
             self.reject()
 
@@ -580,25 +455,12 @@ class SettingsDialog(QDialog):
         cancel_button.clicked.connect(cancel)
         actions_layout.addWidget(cancel_button)
 
-        # Reset = reset all settings from all tabs to default values
-        reset_button = QPushButton("Reset")
-        reset_button.clicked.connect(self._reset)
-        actions_layout.addWidget(reset_button)
-
-        # Save = save the changes and close the dialog
-        def save(_):
-            self._commit()
-            self.accept()
-
-        save_button = QPushButton("Save")
-        save_button.clicked.connect(save)
-        actions_layout.addWidget(save_button)
-        window_layout.addWidget(actions_widget)
-
-        # Do not allow the user to resize the dialog
         self.setFixedSize(
             window_widget.sizeHint().width(), window_widget.sizeHint().height()
         )
+
+    # Here we would like to provide some public methods
+    # So methods of widgets do not need to be exported for each tab
 
     def _set_color(self, ida_color=None, qt_color=None):
         """Sets the color of the user color button."""
