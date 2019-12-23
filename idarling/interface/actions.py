@@ -56,7 +56,9 @@ class Action(object):
         action_name = self.__class__.__name__
 
         # Read and load the icon file
-        icon_data = str(open(self._icon, "rb").read())
+        icon_data_fd = open(self._icon, "rb")
+        icon_data = icon_data_fd.read()
+        icon_data_fd.close()
         self._icon_id = ida_kernwin.load_custom_icon(data=icon_data)
 
         # Create the action descriptor

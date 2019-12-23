@@ -26,7 +26,7 @@ import ida_segment
 import ida_struct
 import ida_typeinf
 
-import events as evt  # noqa: I100,I202
+from . import events  # noqa: I100,I202
 from .events import Event  # noqa: I201
 
 

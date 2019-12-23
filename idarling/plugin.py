@@ -204,6 +204,6 @@ class Plugin(ida_idaapi.plugin_t):
     def save_config(self):
         """Save the configuration file."""
         config_path = self.user_resource("files", "config.json")
-        with open(config_path, "wb") as config_file:
+        with open(config_path, "w") as config_file:
             config_file.write(json.dumps(self._config))
             self._logger.debug("Saved config: %s" % self._config)
