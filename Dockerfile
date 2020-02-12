@@ -1,8 +1,7 @@
-FROM python:3-buster
+FROM python:3
 
 WORKDIR /usr/src/app
 
-COPY setup.py ./
 RUN pip install PyQt5
 
 COPY . .
