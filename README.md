@@ -2,6 +2,11 @@
     <img src="https://i.imgur.com/9Vxm0Fn.png" />
 </p>
 
+
+# Warning
+
+This project is no longer under active development and the more featured and up-to-date fork (link) is probably something more interesting for new comers. Also, IDA has announced an official support for collaborative reverse engineering session and one could also wait for this.
+
 ## Overview
 
 IDArling is a collaborative reverse engineering plugin for [IDA Pro](https://www.hex-rays.com/products/ida/)
