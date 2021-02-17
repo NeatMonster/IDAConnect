@@ -5,7 +5,7 @@
 
 # Warning
 
-This project is no longer under active development and the more featured and up-to-date fork (link) is probably something more interesting for new comers. Also, IDA has announced an official support for collaborative reverse engineering session and one could also wait for this.
+This project is no longer under active development and the more featured and up-to-date [fork](https://github.com/fidgetingbits/IDArling) is probably something more interesting for new comers. Also, IDA has announced an official support for collaborative reverse engineering session and one could also wait for this.
 
 ## Overview
 
