@@ -12,7 +12,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 import shutil
-import urllib2
+from urllib.request import urlopen
 import zipfile
 
 import ida_diskio
@@ -20,7 +20,8 @@ import ida_loader
 
 # Allow the user to override the download URL
 if "URL" not in locals():
-    URL = "https://github.com/IDArlingTeam/IDArling/archive/master.zip"
+    #URL = "https://github.com/IDArlingTeam/IDArling/archive/master.zip"
+    URL = "https://github.com/assafnativ/IDArling/archive/master.zip"
 
 print("[*] Installing IDArling...")
 # Install into the user directory on all platforms
@@ -34,7 +35,7 @@ archive_path = os.path.join(plug_dir, "master.zip")
 if os.path.exists(archive_path):
     os.remove(archive_path)
 with open(archive_path, "wb") as f:
-    f.write(urllib2.urlopen(URL).read())
+    f.write(urlopen(URL).read())
 
 print("[*] Unzipping master.zip archive...")
 archive_dir = os.path.join(plug_dir, "IDArling-master")

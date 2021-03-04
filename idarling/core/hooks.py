@@ -196,7 +196,7 @@ class IDBHooks(Hooks, ida_idp.IDB_Hooks):
             op = "bin"
         elif is_flag(ida_bytes.oct_flag()):
             op = "oct"
-        elif is_flag(ida_bytes.offflag()):
+        elif is_flag(ida_bytes.off_flag()):
             op = "offset"
         elif is_flag(ida_bytes.enum_flag()):
             op = "enum"

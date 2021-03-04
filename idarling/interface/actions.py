@@ -123,7 +123,7 @@ class ActionHandler(ida_kernwin.action_handler_t):
     def _on_progress(progress, count, total):
         """Called when some progress has been made."""
         progress.setRange(0, total)
-        progress.setValue(count)
+        progress.setValue(total)
 
     def __init__(self, plugin):
         super(ActionHandler, self).__init__()
@@ -314,6 +314,7 @@ class SaveActionHandler(ActionHandler):
 
         # Send the packet to upload the file
         packet.upback = partial(SaveActionHandler._on_progress, progress)
+
         d = plugin.network.send_packet(packet)
         if d:
             d.add_callback(

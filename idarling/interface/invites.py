@@ -55,7 +55,7 @@ class Invite(QWidget):
         self._popup_opacity = 0.0
         self._animation = QPropertyAnimation()
         self._animation.setTargetObject(self)
-        self._animation.setPropertyName("popup_opacity")
+        self._animation.setPropertyName(b"popup_opacity")
         self._animation.finished.connect(self.hide)
 
         # Timer used to auto-close the window

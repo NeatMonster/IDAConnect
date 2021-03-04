@@ -40,10 +40,11 @@ class EventFilter(QObject):
         super(EventFilter, self).__init__(parent)
         self._plugin = plugin
         self._intercept = False
+        self._label = None
 
     def install(self):
         self._plugin.logger.debug("Installing the event filter")
-        qApp.instance().installEventFilter(self)
+        # qApp.instance().installEventFilter(self)
 
     def uninstall(self):
         self._plugin.logger.debug("Uninstalling the event filter")
@@ -137,13 +138,17 @@ class EventFilter(QObject):
             and obj.__class__ == QDialog
             and obj.windowTitle() == "About",
         ):
-            # Find a child QGroupBox
-            for groupBox in obj.children():
-                if groupBox.__class__ == QGroupBox:
-                    # Find a child QLabel with an icon
-                    for label in groupBox.children():
-                        if isinstance(label, QLabel) and label.pixmap():
-                            self._replace_icon(label)
+            if self._label is not None:
+                self._replace_icon(self._label)
+            else:
+                # Find a child QGroupBox
+                for groupBox in obj.children():
+                    if groupBox.__class__ == QGroupBox:
+                        # Find a child QLabel with an icon
+                        for label in groupBox.children():
+                            if isinstance(label, QLabel) and label.pixmap():
+                                self._replace_icon(label)
+                                self._label = label
 
         # Is it a QContextMenuEvent on a QWidget?
         if isinstance(obj, QWidget) and isinstance(ev, QContextMenuEvent):
