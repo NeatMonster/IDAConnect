@@ -370,6 +370,16 @@ class StatusWidget(QWidget):
 
         follow_all.triggered.connect(partial(follow_triggered, "everyone"))
         menu.addAction(follow_all)
+
+        unfollow = QAction("Unfollow", menu)
+        pixmap = QPixmap(self._plugin.plugin_resource("unfollow.png"))
+        unfollow.setIcon(QIcon(pixmap))
+        unfollow.setEnabled(bool(users))
+        unfollow.setCheckable(True)
+        unfollow.setChecked(self._plugin.interface.followed == None)
+        unfollow.triggered.connect(partial(follow_triggered, None))
+        menu.addAction(unfollow)
+
         if users:
             menu.addSeparator()
 
